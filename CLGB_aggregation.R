@@ -92,16 +92,16 @@ saveloc <- paste(dataloc, "transformedData/CLGBag_Turner_2022-2023.csv", sep = "
 write.csv(alltur, saveloc, row.names = F)
 
 # Part 3: SUNA ------------------------------------------------------------
-yr <- 2023
+yr <- 2024
 sunaloc <- paste(dataloc, "transformedData/y", yr, "/SUNA/", sep = "")
 
 flist <- list.files(sunaloc, pattern = "*.csv")
 flist
 
-suna <- read.csv((paste(sunaloc, flist[2], sep = "")))
+suna <- read.csv((paste(sunaloc, flist[1], sep = "")))
 
-sunaloc <- paste(dataloc, "rawData/y2022/SUNA/SUNA_WQual_2022-06-06-to-2022-11-28.csv", sep = "")
-suna <- read.csv(sunaloc)
+#sunaloc <- paste(dataloc, "rawData/y2022/SUNA/SUNA_WQual_2022-06-06-to-2022-11-28.csv", sep = "")
+#suna <- read.csv(sunaloc)
 
 
 # Create a single datetime column
@@ -161,7 +161,7 @@ staloc <- paste(dataloc, "transformedData/y", yr, "/Stage/", sep = "")
 flist <- list.files(staloc, pattern = "*.csv")
 flist
 
-dfloc <- paste(staloc, flist[2], sep ="")
+dfloc <- paste(staloc, flist[1], sep ="")
 sta2 <- read.csv(dfloc)
 sta2 <- subset(sta2, select = -c(row.nb))
 sta2$DateTime <- as.POSIXct(sta2$DateTime, tz = "EST",
@@ -196,9 +196,9 @@ stage$density = (999.83952 + (16.945176 * stage$Temp.C.x) -
                    (46.170461e-06 * stage$Temp.C.x**3) + 
                    (105.56302e-09 * stage$Temp.C.x**4) - 
                    (280.54253e-12 * stage$Temp.C.x**5)) /
-  (1 + 16.879850e-03 * stage$Temp.C.x)
+  (1 + 16.879850e-03 * stage$Temp.C.x) # density in kg/m3
 
-# Convert density to lb/ft^3
+# Convert density from kg/m3 to lb/ft^3
 stage$density.lbft <- 0.0624279606 * stage$density
 
 # Conversion factors
@@ -207,12 +207,13 @@ KPA_TO_PSI = 0.1450377
 PSI_TO_PSF = 144.0
 
 # Convert pressure to density-dependent fluid depth array
-stage$depth.m = FEET_TO_METERS * (KPA_TO_PSI * PSI_TO_PSF * stage$watPres.kPa) / stage$density.lbft
+
+stage$depth.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * stage$watPres.kPa) / stage$density.lbft
 
 # Covert depth to density
 # Rating curve is in its own Excel file
 
-stage$discharge.m3s <- 0.3861*(stage$depth.m^3.4147)
+stage$discharge.m3s <- 0.0478*(stage$depth.m^1.7148)
 
 # Remane columns with awkward names
 
@@ -226,6 +227,30 @@ stage$DateTime <- as.character(format(stage$DateTime))
 
 saveloc <- paste(dataloc, "transformedData/CLGBag_DISCHARGE_2022-2023.csv", sep = "")
 write.csv(stage, saveloc, row.names = F)
+
+
+# plot discharge
+for (i in 1:nrow(stage)){
+  if (!is.na(stage$discharge.m3s[i])){
+    if (stage$discharge.m3s[i] < 0.001){
+      stage$discharge.m3s[i] <- NA
+    }
+  }
+}
+
+stage2 <- na.omit(stage)
+
+par(mar = c(4.5, 5, 2, 2))
+plot(stage2$DateTime, stage2$discharge.m3s, type = "l",
+     log = "y",
+     xlab = "Date",
+     ylab = expression(paste("Discharge (m"^"3","/s)")),
+     col = "darkslateblue",
+     cex.lab = 1.5,
+     cex.axis = 1.5,
+     yaxt = "n"
+)
+axis(side = 2, at = c(0.01, 0.1, 1), cex.axis = 1.5) 	 
   
 
 # Stage if more than one synthesis file (i.e. duplicate datetimes) --------
@@ -258,6 +283,48 @@ plot(sta$DateTime, sta$Temp.C, type = "l",
 
 
 
+
+# Part 5: lab data --------------------------------------------------------
+
+# Read in all of the data files
+# ID equivalents
+idloc <- paste(dataloc, "rawData/Lab_Field/WQAL_equivalent_ID.csv", sep = "")
+idlist <- read.csv(idloc)
+
+# TSS data
+tssloc <- paste(dataloc, "rawData/Lab_Field/all_sites_tss.csv", sep = "")
+tssdat <- read.csv(tssloc)
+
+# TN data (from TOC)
+TNloc <- paste(dataloc, "transformedData/Lab_Field/TNdata.csv", sep = "")
+TNdat <- read.csv(TNloc)
+
+# TOC data (from TOC)
+TOCloc <- paste(dataloc, "transformedData/Lab_Field/TOCdata.csv", sep = "")
+TOCdat <- read.csv(TOCloc)
+
+# NH4 data (from SmartChem)
+NH4loc <- paste(dataloc, "transformedData/Lab_Field/NH4data.csv", sep = "")
+NH4dat <- read.csv(NH4loc)
+
+
+labdat <- merge(idlist, TNdat, by.x = "WQAL", by.y = "ID")
+labdat <- merge(labdat, TOCdat, by.x = "WQAL", by.y = "ID")
+labdat <- merge(labdat, NH4dat, by.x = "WQAL", by.y = "SampleID")
+
+labdat <- merge(labdat, tssdat, by.x = c("Site", "Date"),  by.y = c("Site", "Date"), all = TRUE)
+
+
+
+# Clean up data table
+labdat <- subset(labdat, select = c("Site", "Date", "WQAL",
+                                    "TSS.mg.l", "TN", "TOC", 
+                                    "Concentration", "Abs"))
+
+saveloc <- paste(dataloc, "transformedData/CLGBAG_LABDATA_2023-2024.csv", sep = "")
+write.csv(labdat, saveloc, row.names = F)
+
+# ???? --------------------------------------------------------------------
 
 vocabulary[duplicated(vocabulary$id),]
 

@@ -87,6 +87,7 @@ col_order <- c("DateTime", "Temp.C_Stage", "Discharge.m3s_NEW_Stage", "Temp.C_Co
                "Rhodamine.ppb_Turner", "Turbidity.NTU_Turner", "CDOM.ppb_Turner",
                "Depth.m_Turner", "Temp.C_Turner")
 datsave <- datsave[, col_order]
+datsave$DateTime <- as.character(format(datsave$DateTime))
 
 savename <- paste(dataloc, "CLGB_AG_", Sys.Date(), ".csv", sep = "")
 write.csv(file = savename, datsave, row.names = FALSE)
