@@ -11,9 +11,9 @@ library(ggplot2)
 
 # Set data locations
 
-dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB.AG/data/"
+#dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB.AG/data/"
 
-yr <- 2022
+dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Part 1: Conductivity ----------------------------------------------------
 
@@ -30,14 +30,21 @@ cond <- subset(cond, select = -c(row.nb))
 cond$DateTime <- as.POSIXct(cond$DateTime, tz = "EST",
                           format = "%m/%d/%y %I:%M:%S %p")
 
-yr <- 2023
-condloc <- paste(dataloc, "transformedData/y", yr, "/Conductivity/", sep = "")
+yr <- 2024
+condloc <- paste0(dataloc, "CLGB.AG/data/transformedData/y2024/Conductivity/")
 flist <- list.files(condloc, pattern = "*.csv")
 flist
 
-cond2 <- read.csv((paste(condloc, flist[1], sep = "")))
-cond2 <- subset(cond2, select = -c(row.nb))
-cond2$DateTime <- as.POSIXct(cond2$DateTime, tz = "EST",
+cond<-do.call(rbind, lapply(paste0(dataloc, "CLGB.AG/data/transformedData/y2024/Conductivity/", flist),
+                                read.csv, skip=1, header=FALSE))
+
+cond$DateTime <- cond$V2
+cond$cond.uScm <- cond$V3
+cond$temp.C <- cond$V4
+cond <- cond[-c(1), c("DateTime", "cond.uScm", "temp.C")]
+write.csv(cond, paste0(dataloc, "CLGB.AG/data/transformedData/y2024/Conductivity/CLGB.AG_CONDUCTIVITY_2024.csv"))
+
+cond$DateTime <- as.POSIXct(cond$DateTime, tz = "EST",
                             format = "%m/%d/%y %I:%M:%S %p")
 
 cond <- rbind(cond, cond2)

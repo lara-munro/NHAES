@@ -11,7 +11,7 @@ library(ggplot2)
 
 # Set data locations
 
-dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB.AG/data/"
+dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/CLGB.AG/data/"
 
 
 # Part 1: Read in raw data ------------------------------------------------

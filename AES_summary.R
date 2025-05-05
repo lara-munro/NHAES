@@ -226,7 +226,3 @@ tmp
 ggsave(file = paste0("Plots/tmp_", Sys.Date(), ".png"), tmp)
 
 
-
-
-
-
