@@ -37,7 +37,7 @@ dat <- na.omit(dat)
 # 2. Read silver body HOBO ------------------------------------------------
 
 # Read tables from 2024 for silver body HOBO
-staloc <- paste0(dataloc, "CLGB.AG/data/rawData/y2024/Stage/")
+staloc <- paste0(dataloc, "CLGB.AG/data/stage/y2024/rawData/")
 flist <- list.files(staloc, pattern = "*_silver.csv")
 flist
 
@@ -89,7 +89,7 @@ dat <- merge(dat, sta, by = "DateTime", all = TRUE)
 # 3. Read black body HOBO -------------------------------------------------
 
 # Read tables from 2024 for black body HOBO
-staloc <- paste0(dataloc, "CLGB.AG/data/rawData/y2024/Stage/")
+staloc <- paste0(dataloc, "CLGB.AG/data/stage/y2024/rawData/")
 flist <- list.files(staloc, pattern = "*_black.csv")
 flist
 
@@ -157,7 +157,7 @@ dat <- merge(dat, sta, by = "DateTime", all = TRUE)
 
 # 4. Read EXO  ------------------------------------------------------------
 
-exoname <- paste(dataloc, "CLGB.AG/data/transformedData/y2024/EXO/EXO_CLGBag_2024-05-02-to-2024-09-25.csv", sep = "")
+exoname <- paste(dataloc, "CLGB.AG/data/fdom/y2024/intermediateData/EXO_CLGBag_2024-05-02-to-2024-09-25.csv", sep = "")
 exodat <- read.csv(exoname)
 
 # Convert date and time columns to datetime
@@ -167,7 +167,7 @@ head(exodat)
 exodat <- exodat[c("DateTime", "Pressure.psi", "Temp.C")]
 
 
-exoname <- paste(dataloc, "CLGB.AG/data/transformedData/y2024/EXO/EXO_CLGBag_2024-10-04-to-2024-12-04.csv", sep = "")
+exoname <- paste(dataloc, "CLGB.AG/data/fdom/y2024/intermediateData/EXO_CLGBag_2024-10-04-to-2024-12-04.csv", sep = "")
 exodat2 <- read.csv(exoname)
 exodat2$DateTime <- as.POSIXct(paste(exodat2$Date, exodat2$Time), format = "%m/%d/%Y %H:%M:%S")
 head(exodat2)
@@ -244,24 +244,8 @@ dat$depth.m.exo = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$watPres.kPa.
 
 dat[sapply(dat, is.infinite)] <- NA
 
-# 6. Calculate depth offsets ----------------------------------------------
-
-# Offsets from each sensor to visual stage (get from rating curve file)
-vis.silver = 0.067988753 # offset from the silver HOBO changes from 2022 to 2024. This offset is only from 2024
-vis.black = 0.217437035
-vis.exo = 0.318362188
-
-# Remove exo depths from when exo was out of the water
-
-dat$depth.m.exo[dat$depth.m.exo < 0.1] <- NA
-
-dat$depth.silver.standard.m <- dat$depth.m.silver + vis.silver
-dat$depth.black.standard.m <- dat$depth.m.black + vis.black
-dat$depth.exo.standard.m <- dat$depth.m.exo + vis.exo
-
-
 # 7. Export data ----------------------------------------------------------
-
+dat$DateTime <- as.character(format(dat$DateTime))
 write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2024_waterDepths_FINAL.csv"), row.names = F)
 
 
@@ -314,169 +298,5 @@ ggplot(data = dat, aes(x = DateTime))+
   ylab("Standardized depth (m)")+
   scale_color_manual(values = c("black", "blue","grey" ))+
   labs(color = "Sensor")
-
-
-# 9. Calculate discharge --------------------------------------------------
-
-for (i in 1:nrow(dat)){
-  if(!is.na(dat$depth.black.standard.m[i])){
-    if(dat$depth.black.standard.m[i] < 0.74){
-      dat$Q.black.m3s[i] <- 4.0443 * dat$depth.black.standard.m[i]**14.187
-    } else {
-      dat$Q.black.m3s[i] <- 0.1723 * dat$depth.black.standard.m[i]**3.1365
-    }
-  } else{
-    dat$Q.black.m3s[i] <- NA
-  }
-  if(!is.na(dat$depth.silver.standard.m[i])){
-    if(dat$depth.silver.standard.m[i] < 0.74){
-      dat$Q.silver.m3s[i] <- 4.0443 * dat$depth.silver.standard.m[i]^14.187
-    } else{
-      dat$Q.silver.m3s[i] <- 0.1723 * dat$depth.silver.standard.m[i]^3.1365
-    }
-  } else {
-    dat$Q.silver.m3s[i] <- NA
-  }
-  
-  if(!is.na(dat$depth.exo.standard.m[i])){
-    if(dat$depth.exo.standard.m[i] < 0.74){
-      dat$Q.exo.m3s[i] <- 4.0443 * dat$depth.exo.standard.m[i]^14.187
-    } else {
-      dat$Q.exo.m3s[i] <- 0.1723 * dat$depth.exo.standard.m[i]^3.1365
-    }
-  } else {
-    dat$Q.exo.m3s[i] <- NA
-  }
-  
-}
-
-for (i in 1:nrow(dat)){
-  if (dat$depth.black.standard.m[i] > 0.95 | is.na(dat$depth.black.standard.m[i])){
-    dat$Q.black.m3s.QF[i] <- 1
-  } else {
-    dat$Q.black.m3s.QF[i] <- 0
-  }
-  
-  if (dat$depth.silver.standard.m[i] > 0.95  | is.na(dat$depth.silver.standard.m[i])){
-    dat$Q.silver.m3s.QF[i] <- 1
-  } else {
-    dat$Q.silver.m3s.QF[i] <- 0
-  }
-  
-  if (dat$depth.exo.standard.m[i] > 0.95  | is.na(dat$depth.exo.standard.m[i])){
-    dat$Q.exo.m3s.QF[i] <- 1
-  } else {
-    dat$Q.exo.m3s.QF[i] <- 0
-  }
-}
-
-# Choose the best Q value to include (silver > black > exo)
-
-for (i in 1:nrow(dat)){
-  if (!is.na(dat$Q.silver.m3s[i])){
-    dat$Q.m3s[i] <- dat$Q.silver.m3s[i]
-    dat$Q.m3s.QF[i] <- dat$Q.silver.m3s.QF[i]
-    dat$Q.source[i] <- "silver HOBO"
-  } else if (!is.na(dat$Q.black.m3s[i])){
-    dat$Q.m3s[i] <- dat$Q.black.m3s[i]
-    dat$Q.m3s.QF[i] <- dat$Q.black.m3s.QF[i] 
-    dat$Q.source[i] <- "black HOBO"
-  } else {
-    dat$Q.m3s[i] <- dat$Q.exo.m3s[i]
-    dat$Q.m3s.QF[i] <- dat$Q.exo.m3s.QF[i] 
-    dat$Q.source[i] <- "EXO"
-  }
-  
-}
-
-plot(dat$DateTime, dat$Q.m3s, type = "l", log = "y")
-
-dat2 <- dat[-c(1:11178),]
-
-plot(dat2$DateTime, dat2$Q.m3s, type = "l", log = "y",
-     ylab = expression(paste("Discharge (m"^"3","/s)")),
-     xlab = "date")
-
-dat2 <- dat
-
-dat$DateTime <- as.character(format(dat$DateTime))
-write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2024_DISCHARGE.csv"), row.names = F)
-
-
-# 9.1 Calculate discharge for 2022 ----------------------------------------
-
-dat2022 <- read.csv(paste0(dataloc, "CLGB.AG/data/ratingCurve/CLGB.AG_2022_waterDepths.csv"))
-dat2022$DateTime <- as.POSIXct(dat2022$DateTime, tz = "EST",
-                           format = "%Y-%m-%d %H:%M")
-offset2022 <- -0.034760685
-
-dat2022$depth.standard.m <- dat2022$depth.m.new + offset2022
-
-for (i in 1:nrow(dat2022)){
-  if(!is.na(dat2022$depth.standard.m[i])){
-    if(dat2022$depth.standard.m[i] < 0.74){
-      dat2022$Q.m3s[i] <- 4.0443 * dat2022$depth.standard.m[i]**14.187
-      dat2022$Q.m3sQF[i] <- 0
-    } else {
-      dat2022$Q.m3s[i] <- 0.1723 * dat2022$depth.standard.m[i]**3.1365
-      if(dat2022$depth.standard.m[i] < 0.95){
-        dat2022$Q.m3sQF[i] <- 0
-      } else {
-        dat2022$Q.m3sQF[i] <- 1
-      }
-    }
-  } else{
-    dat2022$Q.m3s[i] <- NA
-    dat2022$Q.m3sQF[i] <- 1
-  }
-}
-
-dat2022$DateTime <- as.character(format(dat2022$DateTime))
-write.csv(dat2022, paste0(dataloc,"/CLGB.AG/data/stage/y2022/finalData/CLGB.AG_2022_DISCHARGE.csv"), row.names = F)
-
-
-# 9.2 calculate discharge for 2023 ----------------------------------------
-
-dat2023 <- read.csv(paste0(dataloc, "CLGB.AG/data/ratingCurve/CLGB.AG_2023_waterDepths.csv"))
-dat2023$DateTime <- as.POSIXct(dat2023$DateTime, tz = "EST",
-                               format = "%Y-%m-%d %H:%M")
-offset2023A <- -0.034760685 # 2022 to 2023-06-01
-offset2023B <- -0.077386304 # 2023-06-01 10:45 to 2023-10-06
-
-offsetchangedate <- as.POSIXct("2023-06-01 10:45")
-
-for (i in 1:nrow(dat2023)){
-  if (dat2023$DateTime[i] < offsetchangedate){
-    dat2023$depth.standard.m[i] <- dat2023$depth.m[i] + offset2023A
-  } else{
-    dat2023$depth.standard.m[i] <- dat2023$depth.m[i] + offset2023B
-  }
-}
-
-
-for (i in 1:nrow(dat2023)){
-  if(!is.na(dat2023$depth.standard.m[i])){
-    if(dat2023$depth.standard.m[i] < 0.74){
-      dat2023$Q.m3s[i] <- 4.0443 * dat2023$depth.standard.m[i]**14.187
-      dat2023$Q.m3sQF[i] <- 0
-    } else {
-      dat2023$Q.m3s[i] <- 0.1723 * dat2023$depth.standard.m[i]**3.1365
-      if(dat2023$depth.standard.m[i] < 0.95){
-        dat2023$Q.m3sQF[i] <- 0
-      } else {
-        dat2023$Q.m3sQF[i] <- 1
-      }
-    }
-  } else{
-    dat2023$Q.m3s[i] <- NA
-    dat2023$Q.m3sQF[i] <- 1
-  }
-}
-
-dat2023$DateTime <- as.character(format(dat2023$DateTime))
-write.csv(dat2023, paste0(dataloc,"/CLGB.AG/data/stage/y2023/finalData/CLGB.AG_2023_DISCHARGE.csv"), row.names = F)
-
-
-
 
 
