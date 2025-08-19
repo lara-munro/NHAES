@@ -88,18 +88,44 @@ tocdat <- read.csv(paste0(csvloc, "rawData/TOC-TN/TOC_all_data.csv"))
 dat <- merge(dat, tocdat, by.x = "WQAL.ID", by.y = "sampleID", all.x = TRUE)
 
 
+#  NO3 data ---------------------------------------------------------------
+
+no3dat <- read.csv(paste0(csvloc, "intermediateData/NO3data_quick.csv"))
+dat <- merge(dat, no3dat, by.x = "WQAL.ID", by.y = "SampleID", all = TRUE)
+
 
 # Save data frame as its own item (could be rewritten in other scripts)
 chemdat <- dat
 
 # save file
 
-write.csv(chemdat, paste0(dataloc, "lab/intermediateData/chem_data_2025_04_10.csv"), row.names = FALSE)
+write.csv(chemdat, paste0(dataloc, "lab/intermediateData/chem_data_2025_06_26.csv"), row.names = FALSE)
 
 # Subset CLGB.Ag data to compare with sensor
 clgbag.chem <- chemdat[which(chemdat$site == "CLGB.AG"),]
 
+# Subset OMPD data to compare with sensor
+ompd.chem <- chemdat[which(chemdat$site == "OMPD"),]
+
+# Subset CLGB.Upper data to compare with sensor
+clgbup.chem <- chemdat[which(chemdat$site == "CLGB.Upper"),]
+
 # Plot data ---------------------------------------------------------------
+
+# Plot NO3 for IC vs Smartchem readings
+
+chemsub <- rbind(clgbag.chem, clgbup.chem)
+chemsub <- rbind(chemsub, ompd.chem)
+
+ggplot(chemdat, aes(x = NO3.mgL, y = WNO3))+
+  geom_point()+
+  xlim(0, 0.2)+
+  ylim(0, 0.2)+
+  geom_abline(intercept = 0, slope = 1)+
+#  geom_smooth(method = "lm")+
+  labs(x = "NO3-N from the IC (mg/l)", y = "NO3-N from the Smartchem (mg/l)")+
+  theme_classic()
+
 
 boxplot(dat$NO3.mgL ~ dat$site,
         ylab = "NO3 (mg/l)",
