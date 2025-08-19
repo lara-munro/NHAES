@@ -1,6 +1,13 @@
 # Conductivity data aggregation
+# Author: Lara Munro
+# Date: August 2025
 
-# Part 0: set up R space --------------------------------------------------
+# Script aggregates conductivity measurements from the HOBO data logger at CLGB.Ag into annual data tables
+# Data files need to be converted into .CSVs in HOBOWare
+# Loops are set up for data tables exported into EST (GMT -5.00) and for the logger withe the serial number: 20625421
+# If the loops do not work, check time zones and logger serial number
+
+# Set up R space --------------------------------------------------
 
 # Load relevant libraries
 library(tidyverse)
