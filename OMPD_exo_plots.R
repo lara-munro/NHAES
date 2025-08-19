@@ -2,6 +2,10 @@
 ## Created 2024-06
 ## Lara Munro
 
+# Script used for data analysis at OMPD in 2024
+# Script reads EXO data (need to produce intermediate data that excludes the extra headers) and creates graphs of the data
+# Script also reads data from the SUNA deployed at OMPD in 2024 and Q from the USGS for the Oyster River
+# Script aggregates all data into a single data frame and saves it in the appropriate location
 
 # Part 0: set up R space --------------------------------------------------
 
@@ -12,11 +16,11 @@ library(ggplot2)
 # Set data locations
 
 #dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/CLGB.AG/data/transformedData/"
-dataloc <- "C:/Users/laram/OneDrive - USNH/OMPD/transformedData/"
+dataloc <- "C:/Users/laram/OneDrive - USNH/OMPD/"
 
 # Part 1: Read YSI EXO file -----------------------------------------------
 
-exoname <- paste(dataloc, "y2024/EXO/EXO_OMPD_2024-06-13-to-2024-12-04.csv", sep = "")
+exoname <- paste(dataloc, "fdom/y2024/intermediateData/EXO_OMPD_2024-06-13-to-2024-12-04.csv", sep = "")
 exodat <- read.csv(exoname)
 head(exodat)
 
@@ -84,7 +88,7 @@ plot(exodat$datetime, exodat$Turbidity.FNU, type = "l", xlab = "date",
 
 # 2. SUNA -----------------------------------------------------------------
 
-sunaloc <- paste0(ompdloc, "/transformedData/y2024/SUNA/SUNA_legible_FINAL2024.csv")
+sunaloc <- paste0(dataloc, "no3/y2024/finalData/SUNA_legible_FINAL2024.csv")
 suna <- read.csv(sunaloc)
 suna$DateTime <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M:%S")
 suna.ompd <- suna[c("DateTime", "NO3.mgL")]
@@ -126,7 +130,7 @@ mtext(expression(paste("Depth (m)")), side = 4, line = 3, cex = 1.5)
 
 # Download data from USGS !!
 
-disloc <- paste0(ompdloc, "transformedData/y2024/Oyster_USGS_2024-01-to-2025-01.csv")
+disloc <- paste0(dataloc, "discharge/y2024/finalData/Oyster_USGS_2024-01-to-2025-01.csv")
 ompdQ <- read.csv(disloc)
 
 ompdQ$datetime <- as.POSIXct(ompdQ$DateTime, tz = "EST5EDT", format = "%Y-%m-%d %H:%M")
