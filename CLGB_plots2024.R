@@ -18,7 +18,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 disloc <- paste0(dataloc, "CLGB.AG/data/stage/y2024/finalData/CLGB.AG_2024_DISCHARGE.csv")
 dis <- read.csv(disloc)
 dis$DateTime <- as.POSIXct(dis$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M:%S")
-dis2 <- dis[c("DateTime", "Q.m3s", "Q.m3s.QF")]
+dis2 <- dis[c("DateTime.EST", "Q.m3s", "Q.m3sQF")]
 
 # Conductivity
 condloc <- paste0(dataloc, "CLGB.AG/data/conductivity/y2024/finalData/CLGB.AG_CONDUCTIVITY_2024.csv")
@@ -29,8 +29,8 @@ cond$DateTime <- as.POSIXct(cond$DateTime, tz = "EST",
 # SUNA
 sunaloc <- paste0(dataloc, "CLGB.AG/data/no3/y2024/finalData/SUNA_legible_FINAL2024.csv")
 suna <- read.csv(sunaloc)
-suna$DateTime <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M:%S")
-suna2 <- suna[c("DateTime", "NO3.mgL")]
+suna$DateTime.EST <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M:%S")
+suna2 <- suna[c("DateTime.EST", "NO3.mgL")]
 
 # EXO
 exoloc <- paste0(dataloc, "CLGB.AG/data/fdom/y2024/finalData/CLGB.AG_EXO_2024.csv")
@@ -46,7 +46,7 @@ clgbag.chem <- chemdat[which(chemdat$site == "CLGB.AG"),]
 
 # Merge data
 
-dat <- merge(dis2, suna2, by = "DateTime", all.x = TRUE)
+dat <- merge(dis2, suna2, by = "DateTime.EST", all.x = TRUE)
 dat <- merge(dat, cond, by = "DateTime", all.x = TRUE)
 dat <- merge(dat, exo, by = "DateTime", all.x = TRUE)
 dat <- merge(dat, clgbag.chem, by = "DateTime", all.x = TRUE)
