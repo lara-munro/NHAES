@@ -1,7 +1,7 @@
 # CLGB.Upper data analysis 2024
 # Date: January 2025
 # Author: Lara Munro
-
+# This code is depreciated. Do not use
 
 # 1. Set up R space -------------------------------------------------------
 library(ggplot2)
