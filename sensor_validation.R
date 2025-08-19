@@ -1,9 +1,9 @@
 # Sensor data validation
-
-
 # Date: January 2025
 # Author: Lara Munro
 
+# Script creates regression plots between sensor data and grab samples
+# Script analyses data from CLGB.Ag, OMPD, and CLGB.Upper
 
 # Part 0: set up R space --------------------------------------------------
 
@@ -16,7 +16,7 @@ clgbloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 ompdloc <- "C:/Users/laram/OneDrive - USNH/OMPD/"
 
 # Chemistry (YSI & grab samples)
-chemloc <- paste0(clgbloc, "CLGB.AG/data/lab/intermediateData/chem_data_2025_04_10.csv")
+chemloc <- paste0(clgbloc, "CLGB.AG/data/lab/intermediateData/chem_data_2025_02_23.csv")
 chemdat <- read.csv(chemloc)
 chemdat <- chemdat[!is.na(chemdat$WQAL.ID),]
 chemdat <- chemdat[!is.na(chemdat$DateTime),]
@@ -26,6 +26,8 @@ chemdat$DON.mgl[chemdat$DON < 0] <- NA
 chem.clgb <- subset(chemdat, site == "CLGB.AG")
 chem.ompd <- subset(chemdat, site == "OMPD")
 
+chem.no3 <- read.csv(paste0(clgbloc, "CLGB.AG/data/lab/intermediateData/NO3data_quick.csv"))
+
 
 # 1. CLGB.Ag --------------------------------------------------------------
 
@@ -33,23 +35,49 @@ chem.ompd <- subset(chemdat, site == "OMPD")
 sunaloc <- paste0(clgbloc, "CLGB.Ag/data/no3/y2023/finaldata/CLGBag_SUNA_2022-2023.csv")
 suna <- read.csv(sunaloc)
 suna$DateTime <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M")
-suna$no3.suna.mgL <- suna$no3.mgl
-suna.clgb2023 <- suna[c("DateTime", "no3.suna.mgL")]
+suna$no3.suna.mgl <- suna$no3.mgl
+suna.clgb2023 <- suna[c("DateTime", "no3.suna.mgl")]
 
 sunaloc <- paste0(clgbloc, "CLGB.Ag/data/no3/y2024/finaldata/SUNA_legible_FINAL2024.csv")
 suna <- read.csv(sunaloc)
 suna$DateTime <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M")
-suna$no3.suna.mgL <- suna$NO3.mgL
-suna.clgb2024 <- suna[c("DateTime", "no3.suna.mgL")]
+suna$no3.suna.mgl <- suna$NO3.mgL
+suna.clgb2024 <- suna[c("DateTime", "no3.suna.mgl")]
 
 suna.clgb <- rbind(suna.clgb2023, suna.clgb2024)
 
 # merge chemistry data with suna
 
-dat.clgb <- merge(chem.clgb, suna.clgb, by = "DateTime", all.x = TRUE, all.y = FALSE)
+dat.clgb <- merge(clgbag.chem, suna.clgb, by = "DateTime", all = TRUE)
 
 # Remove NO3 concentrations below 0
-dat.clgb$no3.suna.mgL[dat.clgb$no3.suna.mgL < 0] <- NA
+dat.clgb$no3.suna.mgl[dat.clgb$no3.suna.mgl < 0] <- NA
+
+# SCAN at CLGB.Ag
+scanloc <- paste0(clgbloc, "CLGB.Ag/data/no3/y2025/intermediateData/no3_2025-04-24-to-2025-05-02_clgb_ag.csv") 
+scan.clgbagA <- read.csv(scanloc)
+scan.clgbagA$DateTime <- as.POSIXct(scan.clgbagA$Timestamp)
+scan.clgbagA$DateTime <- round_date(scan.clgbagA$DateTime, "15 minutes")
+scan.clgbagA <- rename(scan.clgbagA,
+                      no3.scan.mgl = no3.mgl,
+                      turb.scan.ftu = turbidity.ftu,
+                      temp.scan.C = temperature.C)
+scan.clgbagA <- scan.clgbagA[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+
+scanloc <- paste0(clgbloc, "CLGB.Ag/data/no3/y2025/rawData/25063800_parameter_20250502T194500.csv")
+scan.clgbag <- read.csv(scanloc)
+scan.clgbag$DateTime <- as.POSIXct(scan.clgbag$Timestamp, format = "%Y-%m-%dT%H:%M:%S-0400")
+scan.clgbag <- rename(scan.clgbag,
+                       no3.scan.mgl = NO3eq,
+                      turb.scan.ftu = Turbidity,
+                      temp.scan.C = Temperature)
+scan.clgbag <- scan.clgbag[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+scan.clgbag <- rbind(scan.clgbagA, scan.clgbag)
+
+# merge SCAN data with the rest
+dat.clgb <- merge(dat.clgb, scan.clgbag, by = "DateTime", all = TRUE)
 
 # EXO at CLGB.Ag
 exoloc <- paste0(clgbloc, "CLGB.Ag/data/fdom/y2024/finaldata/CLGB.AG_EXO_2024.csv")
@@ -69,16 +97,51 @@ turner <- turner[c("DateTime", "Turbidity.NTU", "CDOM.ppb", "Temp.C")]
 dat.clgb <- merge(dat.clgb, turner, by = "DateTime", all.x = TRUE)
 
 # Plot NO3 data
-fart <- lm(dat.clgb$no3.suna.mgL~ dat.clgb$NO3.mgL)
+fart <- lm((dat.clgb$no3.suna.mgl)~ dat.clgb$WNO3)
 summary(fart)
-plot(dat.clgb$NO3.mgL, dat.clgb$no3.suna.mgL, pch = 19,
+plot(dat.clgb$WNO3, (dat.clgb$no3.suna.mgl), pch = 19,
      ylim = c(0, 0.3),
      xlim = c(0, 0.3),
-     xlab = "Grab sample NO3 (mg/L)",
-     ylab = "SUNA NO3 (mg/L)")
+     xlab = "Grab sample NO3 - N (mg/L)",
+     ylab = "SUNA NO3 - N (mg/L)")
 abline(a = fart$coefficients[1], b = fart$coefficients[2])
 abline(a = 0, b = 1, col = "red")
-text(dat.clgb$NO3.mgL, dat.clgb$no3.suna.mgL,
+#abline(a = 0, b = (62/14), col = "blue")
+text(dat.clgb$WNO3, dat.clgb$no3.suna.mgL,
+     labels = round_date(dat.clgb$DateTime, "day"), pos = 4)
+
+# Plot NO3 time series vs grab samples
+ggplot(data = dat.clgb, aes(x = DateTime))+
+  geom_line(aes(y = (no3.suna.mgl)))+
+  geom_line(aes(y = (no3.scan.mgl * 14/62)))+
+  geom_point(aes(y = WNO3), col = "red")+
+  xlim(limits = (as.POSIXct(c("2023-05-15", "2023-12-31")))) +
+  ylim(limits= c(0, 0.5))+
+  labs(x = "Date 2023", y = "NO3-N (mg/l)")+
+  ggtitle("CLGB.Ag 2023")+
+  theme_classic()
+
+# plot time series for SCAN and grab samples
+dat.clgb2025 <- dat.clgb[dat.clgb$DateTime >= "2025-04-22",]
+  
+ggplot(data = dat.clgb2025, aes(x = DateTime))+
+  geom_line(aes(y = (no3.scan.mgl * 14/62)))+
+  geom_point(aes(y = WNO3), col = "red")+
+  labs(x = "Date 2025", y = "NO3-N (mg/l)")+
+  ggtitle("CLGB.Ag 2025")+
+  theme_classic()
+
+fart <- lm((dat.clgb$no3.scan.mgl*14/62)~ dat.clgb$WNO3)
+summary(fart)
+plot(dat.clgb$WNO3, (dat.clgb$no3.scan.mgl*14/62), pch = 19,
+#     ylim = c(0, 0.3),
+#     xlim = c(0, 0.3),
+     xlab = "Grab sample NO3 - N (mg/L)",
+     ylab = "SUNA NO3 - N (mg/L)")
+abline(a = fart$coefficients[1], b = fart$coefficients[2])
+abline(a = 0, b = 1, col = "red")
+#abline(a = 0, b = (62/14), col = "blue")
+text(dat.clgb$WNO3, (dat.clgb$no3.scan.mgL*14/62),
      labels = round_date(dat.clgb$DateTime, "day"), pos = 4)
 
 
@@ -157,7 +220,38 @@ suna$DateTime <- as.POSIXct(suna$DateTime, tz = "EST", format = "%Y-%m-%d %H:%M:
 suna$no3.suna.mgl <- suna$NO3.mgL
 suna.ompd <- suna[c("DateTime", "no3.suna.mgl")]
 
-dat.ompd <- merge(chem.ompd, suna.ompd, by = "DateTime", all.x = TRUE)
+dat.ompd <- merge(ompd.chem, suna.ompd, by = "DateTime", all = TRUE)
+
+# Remove NO3 concentrations below 0
+dat.ompd$no3.suna.mgl[dat.ompd$no3.suna.mgl < 0] <- NA
+
+# SCAN at OMPD
+scanloc <- paste0(ompdloc, "no3/y2025/intermediateData/no3_2025-04-24-to-2025-05-02_ompd.csv") 
+scan.ompdA <- read.csv(scanloc)
+scan.ompdA$DateTime <- as.POSIXct(scan.ompdA$Timestamp)
+scan.ompdA$DateTime <- round_date(scan.ompdA$DateTime, "15 minutes")
+scan.ompdA <- rename(scan.ompdA,
+                       no3.scan.mgl = no3.mgl,
+                       turb.scan.ftu = turbidity.ftu,
+                       temp.scan.C = temp.c)
+scan.ompdA <- scan.ompdA[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+
+scanloc <- paste0(ompdloc, "no3/y2025/rawData/25063801_parameter_20250502T184500.csv")
+scan.ompd <- read.csv(scanloc)
+scan.ompd$DateTime <- as.POSIXct(scan.ompd$Timestamp, format = "%Y-%m-%dT%H:%M:%S-0400")
+scan.ompd <- rename(scan.ompd,
+                      no3.scan.mgl = NO3eq,
+                      turb.scan.ftu = Turbidity,
+                      temp.scan.C = Temperature)
+scan.ompd$no3.scan.mgl[scan.ompd$Flags.NO3eq != ""] <- NA
+scan.ompd <- scan.ompd[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+scan.ompd <- rbind(scan.ompd, scan.ompd)
+
+# merge SCAN data with the rest
+dat.ompd <- merge(dat.ompd, scan.ompd, by = "DateTime", all = TRUE)
+
 
 # EXO at OMPD
 exoname <- paste(ompdloc, "fdom/y2024/finalData/EXO_OMPD_2024-06-13-to-2024-12-04.csv", sep = "")
@@ -172,18 +266,47 @@ exodat <- exodat[c("DateTime", "Cond.uscm", "fDOM.QSU", "ODO.percSat", "ODO.mgl"
 
 dat.ompd <- merge(dat.ompd, exodat, by = "DateTime", all.x = TRUE)
 
+# SCAN at OMPD
+
+
+
 # Plot NO3 data
-fart <- lm(dat.ompd$no3.suna.mgl~ dat.ompd$NO3.mgL)
+fart <- lm(dat.ompd$no3.suna.mgl~ dat.ompd$WNO3)
 summary(fart)
-plot(dat.ompd$NO3.mgL, dat.ompd$no3.suna.mgl, pch = 19,
-     ylim = c(0, 0.3),
-     xlim = c(0, 0.3),
-     xlab = "Grab sample NO3 (mg/L)",
-     ylab = "SUNA NO3 (mg/L)")
+plot(dat.ompd$WNO3, dat.ompd$no3.suna.mgl, pch = 19,
+     ylim = c(0, 0.1),
+     xlim = c(0, 0.1),
+     xlab = "Grab sample NO3-N (mg/L)",
+     ylab = "SUNA NO3-N (mg/L)")
 abline(a = fart$coefficients[1], b = fart$coefficients[2])
 abline(a = 0, b = 1, col = "red")
-text(dat.ompd$NO3.mgL.x, dat.ompd$NO3.mgL.y,
+text(dat.ompd$WNO3, dat.ompd$no3.suna.mgl,
      labels = round_date(dat.ompd$DateTime, "day"), pos = 4)
+
+fart <- lm((dat.ompd$no3.scan.mgl*14/62)~ dat.ompd$WNO3)
+summary(fart)
+plot(dat.ompd$WNO3, (dat.ompd$no3.scan.mgl*14/62), pch = 19,
+     ylim = c(0, 0.5),
+     xlim = c(0, 0.5),
+     xlab = "Grab sample NO3-N (mg/L)",
+     ylab = "SCAN NO3-N (mg/L)")
+abline(a = fart$coefficients[1], b = fart$coefficients[2])
+abline(a = 0, b = 1, col = "red")
+text(dat.ompd$WNO3, (dat.ompd$no3.scan.mgl*14/62),
+     labels = round_date(dat.ompd$DateTime, "day"), pos = 4)
+
+
+# Plot NO3 time series vs grab samples
+ggplot(data = dat.ompd, aes(x = DateTime))+
+  geom_line(aes(y = no3.suna.mgl))+
+  geom_line(aes(y = (no3.scan.mgl*14/62)))+
+  geom_point(aes(y = WNO3), col = "red")+
+  labs( x = "Date 2024", y = "NO3-N (mg/l)")+
+  ggtitle("OMPD 2024")+
+  xlim(limits = (as.POSIXct(c("2024-09-01", "2024-12-31")))) +
+  theme_classic()
+
+plot(dat.ompd$WNO3, dat.ompd$no3.scan.mgl*14/62, pch = 19)
 
 # Plot fdom vs DOC
 fart <- lm(dat.ompd$fDOM.QSU~ dat.ompd$TOC.mgl)
@@ -251,7 +374,58 @@ abline(a = fart$coefficients[1], b = fart$coefficients[2])
 abline(a = 0, b = 1, col = "red")
 
 
-# 3. Grab series over time ------------------------------------------------
+# 3. CLGB.UP --------------------------------------------------------------
+
+# SCAN at CLGB.Ag
+scanloc <- paste0(clgbloc, "CLGB.UP/no3/y2025/intermediateData/no3_2025-04-24-to-2025-05-02_clgb_up.csv") 
+scan.clgbupA <- read.csv(scanloc)
+scan.clgbupA$DateTime <- as.POSIXct(scan.clgbupA$Timestamp)
+scan.clgbupA$DateTime <- round_date(scan.clgbupA$DateTime, "15 minutes")
+scan.clgbupA <- rename(scan.clgbupA,
+                       no3.scan.mgl = no3.mgl,
+                       turb.scan.ftu = turbidity.ftu,
+                       temp.scan.C = temperature.C)
+scan.clgbupA <- scan.clgbupA[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+
+scanloc <- paste0(clgbloc, "CLGB.UP/no3/y2025/intermediateData/no3_2025-05-02-to-2025-06-06_clgb_up.csv")
+scan.clgbup <- read.csv(scanloc)
+scan.clgbup$DateTime <- as.POSIXct(scan.clgbup$Timestamp, format = "%Y-%m-%dT%H:%M:%S-0400")
+scan.clgbup <- rename(scan.clgbup,
+                      no3.scan.mgl = NO3eq,
+                      turb.scan.ftu = Turbidity,
+                      temp.scan.C = Temperature)
+scan.clgbup <- scan.clgbup[c("DateTime", "temp.scan.C", "turb.scan.ftu", "no3.scan.mgl")]
+
+scan.clgbup <- rbind(scan.clgbupA, scan.clgbup)
+
+# merge SCAN data with the rest
+dat.clgbup <- merge(clgbup.chem, scan.clgbup, by = "DateTime", all = TRUE)
+
+# Plot NO3 data
+fart <- lm((dat.clgbup$no3.scan.mgl*14/62)~ dat.clgbup$WNO3)
+summary(fart)
+plot(dat.clgbup$WNO3, (dat.clgbup$no3.scan.mgl*14/62), pch = 19,
+     xlab = "Grab sample NO3-N (mg/L)",
+     ylab = "SUNA NO3-N (mg/L)")
+abline(a = fart$coefficients[1], b = fart$coefficients[2])
+abline(a = 0, b = 1, col = "red")
+text(dat.clgbup$WNO3, (dat.clgbup$no3.scan.mgl*14/62),
+     labels = round_date(dat.clgbup$DateTime, "day"), pos = 3)
+
+
+# Plot NO3 time series vs grab samples
+ggplot(data = dat.clgbup, aes(x = DateTime))+
+  geom_line(aes(y = (no3.scan.mgl*14/62)))+
+  geom_point(aes(y = WNO3), col = "red")+
+  labs( x = "Date 2025", y = "NO3-N (mg/l)")+
+  ggtitle("CLGB.Upper 2025")+
+  xlim(limits = (as.POSIXct(c("2025-05-01", "2025-06-30")))) +
+  theme_classic()
+
+
+
+# 4. Grab series over time ------------------------------------------------
 # TSS plot
 ggplot(data = chemdat, aes(DateTime, tss.mgL, color = site))+
   geom_line()+
