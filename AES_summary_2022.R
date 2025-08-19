@@ -2,6 +2,8 @@
 ## Created 2023-11-07
 ## Lara Munro; updated from Chris Whitney
 
+# Data aggregation for 2022
+# 
 
 # Part 0: set up R space --------------------------------------------------
 
