@@ -2,6 +2,9 @@
 # Date: January 2025
 # Author: Lara Munro
 
+# This script was used to produce figures and data for the 2024 AES annual report. 
+# As such, this script is a mishmash of code and data. 
+# Most of the data analysis elements contained in this script can be found in more ordered code.
 
 # 1. Set up R space -------------------------------------------------------
 library(ggplot2)
@@ -11,15 +14,13 @@ library(tidyverse)
 
 dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
-
-
 # 2. Calculate discharge ---------------------------------------------------
 
 uploc <- paste0(dataloc, "CLGB.UP/stage/y2024/rawData")
 
 flist <- list.files(uploc, pattern = "*.csv")
 flist
-stage<-do.call(rbind, lapply(paste0(dataloc, "CLGB.UP/rawData/y2024/stage/", flist),
+stage<-do.call(rbind, lapply(paste0(dataloc, "CLGB.UP/stage/y2024/rawData/", flist),
                             read.csv, skip=1, header=FALSE))
 
 stage$DateTime <- stage$V2
@@ -83,19 +84,19 @@ write.csv(stage2, saveloc, row.names = F)
 # Offset value calculated in the rating curve sheet
 stage$depth.standardized.m <- stage$depth.m + 0.022991373
 
-stage$discharge.m3s <- 2.7668*(stage$depth.standardized.m^5.823)
+stage$discharge.m3s <- 3.0539*(stage$depth.standardized.m^5.7448)
 
 stage2 <- stage
 stage2$DateTime <- as.character(format(stage2$DateTime))
 
-saveloc <- paste(dataloc, "CLGB.UP/transformedData/CLGB.UP_DISCHARGE_2024.csv", sep = "")
+saveloc <- paste(dataloc, "CLGB.UP/stage/y2024/finalData/CLGB.UP_DISCHARGE_2024.csv", sep = "")
 write.csv(stage2, saveloc, row.names = F)
 
 
 
 # 3. Load and aggregate conductivity data ---------------------------------
 
-condloc <- paste0(dataloc, "CLGB.UP/rawData/y2024/Conductivity/")
+condloc <- paste0(dataloc, "CLGB.UP/conductivity/y2024/rawData/")
 flist <- list.files(condloc, pattern = "*.csv")
 flist
 
@@ -114,13 +115,33 @@ cond$DateTime <- as.POSIXct(cond$DateTime, tz = "EST",
 cond2 <- cond
 cond2$DateTime <- as.character(format(cond2$DateTime))
 
-saveloc <- paste(dataloc, "CLGB.UP/transformedData/CLGB.UP_CONDUCTIVITY_2024.csv", sep = "")
+saveloc <- paste(dataloc, "CLGB.UP/conductivity/y2024/finalData/CLGB.UP_CONDUCTIVITY_2024.csv", sep = "")
 write.csv(cond2, saveloc, row.names = F)
 
+# Merge discharge and conductivity
+dat <- merge(stage, cond, by = "DateTime")
+
+saveloc <- paste(dataloc, "CLGB.UP/aggregated data/CLGB.UP_sensor_2024.csv", sep = "")
+dat2 <- dat
+dat2$DateTime <- as.character(format(dat2$DateTime))
+write.csv(dat2, saveloc, row.names = F)
+
+
+# 4. Add grab sample data ---------------------------------------------------
+# Aggregate chemistry data in the grab sample aggregation code
+
+# Subset CLGB.Upper data to compare with sensor
+clgbup.chem <- chemdat[which(chemdat$site == "CLGB.Upper"),]
+
+dat <- merge(dat, clgbup.chem, by = "DateTime", all.x = TRUE)
+
+saveloc <- paste(dataloc, "CLGB.UP/aggregated data/CLGB.UP_2024.csv", sep = "")
+dat2 <- dat
+dat2$DateTime <- as.character(format(dat2$DateTime))
+write.csv(dat2, saveloc, row.names = F)
 
 # 4. Plot discharge and conductivity data ---------------------------------
 
-dat <- merge(stage, cond, by = "DateTime")
 
 # Conductivity and discharge
 
