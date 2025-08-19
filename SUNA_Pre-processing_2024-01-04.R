@@ -20,6 +20,9 @@ library(tidyverse)
 #within the working directory
 #i.e. "~wd/SUNA/CSV/" *Note that for SMD in 2016 there is both /Up and /Out folders
 
+# Titus nutrient addition loc
+dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/Titus-TASCC 2025/CLGB.16/NO3/rawData"
+
 #OMPD loc
 #dataloc <-  "C:/Users/laram/OneDrive - USNH/OMPD/rawData/y2024/SUNA/"
 
@@ -34,10 +37,10 @@ SUNA_Raw<-do.call(rbind, lapply(suna_list,
 # Filter SUNA_Raw for light frames only
 
 # For CLGB.Ag SUNA
-LF <- SUNA_Raw %>% filter(V1 == "SATSLF0419")
+#LF <- SUNA_Raw %>% filter(V1 == "SATSLF0419")
 
-# For OMPD SUNA
-#LF <- SUNA_Raw %>% filter(V1 == "SATSLF0310")
+# For OMPD SUNA & nutrient addition SUNA
+LF <- SUNA_Raw %>% filter(V1 == "SATSLF0310")
 
 # Select SUNA-Raw columns and change column names
 LF <-
@@ -92,7 +95,7 @@ SUNA <- SUNA %>% mutate(Flag = ifelse(SUNA$NO3.uM < 0 | SUNA$NO3.mgL < 0, 1,
 SUNA <- SUNA[-1,]
 
 plot(SUNA$DateTime, SUNA$NO3.mgL, type = "l", xlab = "Date", ylab = "NO3 (mg/l)", pch = ".",
-     main = "CLGB.Ag", xaxt = "n")
+     main = "CLGB.16", xaxt = "n")
 #     ylim = c(0, 2))
 axis.POSIXct(side = 1, x = SUNA$DateTime,
              at = seq(from = round(SUNA$DateTime[1], "day"),
@@ -117,6 +120,9 @@ sunaSaveloc <- paste(dataloc, "no3/y2024/finalData/SUNA_legible_FINAL2024.csv", 
 #OMPD
 dataloc <- "C:/Users/laram/OneDrive - USNH/OMPD/"
 sunaSaveloc <- paste(dataloc, "no3/y2024/finalData/SUNA_legible_FINAL2024.csv", sep = "")
+
+# CLGB.16 nutrient addition
+sunaSaveloc <- "C:/Users/laram/OneDrive - USNH/CLGB/Titus-TASCC 2025/CLGB.16/NO3/CLGB.16_no3.csv"
 
 SUNA$DateTime <- as.character(format(SUNA$DateTime))
 write.csv(file = sunaSaveloc, SUNA, row.names = F)
