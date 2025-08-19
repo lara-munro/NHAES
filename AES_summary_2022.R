@@ -3,7 +3,8 @@
 ## Lara Munro; updated from Chris Whitney
 
 # Data aggregation for 2022
-# 
+# This is a very messy script that, theoretically, has been split up into other scripts that are more organized. 
+# I'm keeping this in the repository because it may have still have important pieces of code.
 
 # Part 0: set up R space --------------------------------------------------
 
