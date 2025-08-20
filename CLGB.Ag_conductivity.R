@@ -1,4 +1,4 @@
-# Conductivity data aggregation
+# CLGB.Ag Conductivity data aggregation
 # Author: Lara Munro
 # Date: August 2025
 
