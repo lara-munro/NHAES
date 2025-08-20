@@ -159,6 +159,7 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 
 # Convert pressure to density-dependent fluid depth array
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
+dat$stage.raw.m[(dat$stage.raw.m<0)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
 
 # Export data ----------------------------------------------------------
@@ -179,9 +180,11 @@ dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
 dat$Q.m3s <- 3.6413 * dat$stage.corrected.m**5.6353
 
 for (i in 1:nrow(dat)){
-  if(dat$stage.corrected.m[i] > 0.66){
+  if (is.na(dat$stage.corrected.m[i])){
     dat$Q.m3sQF[i] <- 1
-  } else {
+  } else if(dat$stage.corrected.m[i] > 0.66){
+    dat$Q.m3sQF[i] <- 1
+  } else{
     dat$Q.m3sQF[i] <- 0
   }
 }
