@@ -2,6 +2,9 @@
 # Author: Lara Munro
 # Date: August 2025
 
+# Script to calculate discharge at CLGB.Up in 2025
+# Includes changes to offset between HOBO and visual stage
+
 # Load relevant libraries
 library(tidyverse)
 library(ggplot2)
