@@ -1,10 +1,14 @@
 # CLGB.Upper data analysis 2024
 # Date: January 2025
 # Author: Lara Munro
+<<<<<<< HEAD
 
 # This script was used to produce figures and data for the 2024 AES annual report. 
 # As such, this script is a mishmash of code and data. 
 # Most of the data analysis elements contained in this script can be found in more ordered code.
+=======
+# This code is depreciated. Do not use
+>>>>>>> df87ee514d1e9568975500211650a60181490d47
 
 # 1. Set up R space -------------------------------------------------------
 library(ggplot2)
