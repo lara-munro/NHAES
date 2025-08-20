@@ -1,5 +1,8 @@
 # CLGB.Ag 2023 discharge
+# Author: Lara Munro
+# Date: August 2025
 
+# Load relevant libraries
 library(tidyverse)
 library(ggplot2)
 
