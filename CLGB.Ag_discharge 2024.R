@@ -253,19 +253,21 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 
 # Convert pressure to density-dependent fluid depth array
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
-
+dat$stage.raw.m[(dat$stage.raw.m<0.1)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
+dat <- subset(dat, select = -(density.lbft))
 
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
 
 dat$DateTime.EST <- as.character(format(dat$DateTime.EST))
-write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2024_waterDepths.csv"), row.names = F)
+#write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2024_waterDepths.csv"), row.names = F)
 write.csv(dat, paste0(dataloc,"/CLGB.AG/data/stage/y2024/finaldata/CLGB.AG_2024_waterDepths.csv"), row.names = F)
 dat <- dat2
 
-# Corrected water depths --------------------------------------------------
+
+# Corrected stage ---------------------------------------------------------
 
 offset2024A <- 0.332121113 # 2024-05-02 to 2024-05-24 13:00
 offsetchangedateA <- as.POSIXct("2024-05-24 13:00")
@@ -285,11 +287,11 @@ offsetchangedateE <- as.POSIXct("2024-07-22 12:00")
 offset2024F <- 0.285065973 #  2024-07-22 12:00 to 2024-08-26 15:45
 offsetchangedateF <- as.POSIXct("2024-08-26 10:45")
 
-offset2024G <- 0.217462984 # Black HOBO starts 2024-08-26
-offsetchangedateG <- as.POSIXct("2024-09-27 00:00")
+offset2024G <- 0.217462984 # Black HOBO starts 2024-08-27
+offsetchangedateG <- as.POSIXct("2024-09-27 08:00")
 
 offset2025 <- 0.067912854 # 2024-09-27 to 2025-06-02 silver HOBO
-offsetchangedate2025 <- as.POSIXct("2024-09-27 00:00")
+offsetchangedate2025 <- as.POSIXct("2024-09-27 08:00")
 
 
 for (i in 1:nrow(dat)){
@@ -382,7 +384,15 @@ for (i in 1:nrow(dat)){
 plot(dat$DateTime.EST, dat$stage.corrected.m, type = "l")
 dat <- subset(dat, select = -c(diff, diff2, diff3, diff4, diff5))
 
-# Calculate discharge
+# Remove adtes & times when theEXO was out of the water for over an hour 
+indx <- (dat$DateTime.EST) >= as.POSIXct("2024-07-22 11:30") & (dat$DateTime.EST) <= as.POSIXct("2024-07-22 16:15")  
+dat$stage.corrected.m[indx & !is.na(indx)] <- NA
+
+indx <- (dat$DateTime.EST) >= as.POSIXct("2024-08-26 10:00") & (dat$DateTime.EST) <= as.POSIXct("2024-08-26 16:00")  
+dat$stage.corrected.m[indx & !is.na(indx)] <- NA
+
+# Discharge ---------------------------------------------------------------
+
 for (i in 1:nrow(dat)){
   if(!is.na(dat$stage.corrected.m[i])){
     if(dat$stage.corrected.m[i] < 0.51){
