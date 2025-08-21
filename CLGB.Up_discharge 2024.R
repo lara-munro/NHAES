@@ -161,6 +161,7 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
 dat$stage.raw.m[(dat$stage.raw.m<0)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
+dat <- subset(dat, select = -(density.lbft))
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
@@ -169,13 +170,15 @@ write.csv(dat, paste0(dataloc,"/CLGB.UP/stage/y2024/finaldata/CLGB.UP_2024_water
 dat <- dat2
 
 
-# Correct stage -----------------------------------------------------------
+# Corrected stage ---------------------------------------------------------
 
 offset2024 <- 0.02673087
  
 dat$stage.correction.factor.m <- offset2024
 
 dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
+
+# Discharge ---------------------------------------------------------------
 
 dat$Q.m3s <- 3.6413 * dat$stage.corrected.m**5.6353
 
