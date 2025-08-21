@@ -145,7 +145,12 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 
 # Convert pressure to density-dependent fluid depth array
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
+dat$stage.raw.m[(dat$stage.raw.m<0)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
+dat <- subset(dat, select = -(density.lbft))
+
+# Remove data after change in barometric pressure
+dat <- dat[which(dat$DateTime.EST <= as.POSIXct("2025-06-02 9:00", tz = "EST")),]
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
@@ -154,7 +159,7 @@ write.csv(dat, paste0(dataloc,"/CLGB.UP/stage/y2025/finaldata/CLGB.UP_2025_water
 dat <- dat2
 
 
-# Correct stage -----------------------------------------------------------
+# Corrected stage ---------------------------------------------------------
 
 offset2025A <- 0.02673087 # Until 2025-03-24
 offsetchangedateA <- as.POSIXct("2025-03-21 13:00")
@@ -175,6 +180,8 @@ for (i in 1:nrow(dat)){
 }
 
 dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
+
+# Discharge ---------------------------------------------------------------
 
 dat$Q.m3s <- 3.6413 * dat$stage.corrected.m**5.6353
 
