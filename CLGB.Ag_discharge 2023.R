@@ -124,22 +124,31 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 
 # Convert pressure to density-dependent fluid depth array
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
-
+dat$stage.raw.m[(dat$stage.raw.m<0.1)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
+dat <- subset(dat, select = -(density.lbft))
+
+# HOBO starts to act weird on 2023-10-06 9:15, replace stage values with NA after then
+## indx <- (dat$DateTime.EST) >= as.POSIXct("2023-10-06 9:15")   
+## dat$stage.raw.m[indx & !is.na(indx)] <- NA
+
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
 dat$DateTime.EST <- as.character(format(dat$DateTime.EST))
-write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2023_waterDepths.csv"), row.names = F)
+#write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2023_waterDepths.csv"), row.names = F)
 write.csv(dat, paste0(dataloc,"/CLGB.AG/data/stage/y2023/finaldata/CLGB.AG_2023_waterDepths.csv"), row.names = F)
 dat <- dat2
 
+
+# Corrected stage -----------------------------------------------------------
+
 # Convert depths to standardized depths
-offset2023A <- -0.035325772 # 2022 to 2023-06-01
+offset2023A <- -0.035325772 # 2022 to 2023-06-28 15:45
 offset2023B <- -0.077775347 # 2023-06-01 10:45 to 2023-10-06
 
-offsetchangedate <- as.POSIXct("2023-06-01 10:45")
-baddepthdate <- as.POSIXct("2023-11-13 00:00")
+offsetchangedate <- as.POSIXct("2023-06-28 15:45")
+baddepthdate <- as.POSIXct("2023-10-06 09:15")
 
 # Add depth offset based on date
 for (i in 1:nrow(dat)){
@@ -149,12 +158,13 @@ for (i in 1:nrow(dat)){
     dat$stage.correction.factor.m[i] = offset2023B
   } else {
     dat$stage.correction.factor.m[i] = NA
-    
   }
 }
 
 
 dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
+
+# Discharge ---------------------------------------------------------------
 
 for (i in 1:nrow(dat)){
   if(!is.na(dat$stage.corrected.m[i])){
