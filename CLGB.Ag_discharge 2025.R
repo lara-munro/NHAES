@@ -124,18 +124,23 @@ dat$density.lbft <- 0.0624279606 * dat$density.kgm3
 # Convert pressure to density-dependent fluid depth array
 
 dat$stage.raw.m = (FEET_TO_METERS) * (KPA_TO_PSI * PSI_TO_PSF * dat$pres.diff.kpa) / dat$density.lbft
+dat$stage.raw.m[(dat$stage.raw.m<0.1)] <- NA
 dat[sapply(dat, is.infinite)] <- NA
+dat <- subset(dat, select = -(density.lbft))
+
+# Remove data after change in barometric pressure
+dat <- dat[which(dat$DateTime.EST <= as.POSIXct("2025-06-02 9:00", tz = "EST")),]
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
 
 dat$DateTime.EST <- as.character(format(dat$DateTime.EST))
-write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2025_waterDepths.csv"), row.names = F)
+#write.csv(dat, paste0(dataloc,"/CLGB.AG/data/ratingCurve/CLGB.AG_2025_waterDepths.csv"), row.names = F)
 write.csv(dat, paste0(dataloc,"/CLGB.AG/data/stage/y2022/finaldata/CLGB.AG_2025_waterDepths.csv"), row.names = F)
 dat <- dat2
 
 
-# Correct stage -----------------------------------------------------------
+# Corrected stage -----------------------------------------------------------
 
 offset2025A <- 0.067912854 # 2024-09-27 to 2025-06-03 Old atmospheric pressure
 offsetchangedate <- as.POSIXct("2025-06-02 09:00")
@@ -152,6 +157,9 @@ for (i in 1:nrow(dat)){
 }
 
 dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
+
+
+# Discharge ---------------------------------------------------------------
 
 for (i in 1:nrow(dat)){
   if(!is.na(dat$stage.corrected.m[i])){
