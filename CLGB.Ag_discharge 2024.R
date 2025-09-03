@@ -26,7 +26,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Read barometrice pressure data
 # Get this data from Jody Potter at WQAL, make sure that units are the same 
-baroloc <- paste(dataloc, "WHB Barometric/annual/WHB_atm_Pressure2024.csv", sep = "")
+baroloc <- paste(dataloc, "Barometer/annual/WHB_atm_Pressure2024.csv", sep = "")
 barodat <- read.csv(baroloc)
 barodat$DateTime <- as.POSIXct(barodat$DateTime, tz = "EST",
                                format = "%Y-%m-%d %H:%M")
@@ -269,29 +269,33 @@ dat <- dat2
 
 # Corrected stage ---------------------------------------------------------
 
-offset2024A <- 0.332121113 # 2024-05-02 to 2024-05-24 13:00
-offsetchangedateA <- as.POSIXct("2024-05-24 13:00")
+offset2024A <- 0.306454493 # 2024-05-02 00:00 to 2024-05-31 14:15
+# changed from 2024-05-02 to 2024-05-24 13:00 on 28/8/2025
+offsetchangedateA <- as.POSIXct("2024-05-31 14:15")
 
-offset2024B <- 0.293621184 # 2024-05-24 13:15 to  2024-05-31 14:15
-offsetchangedateB <- as.POSIXct("2024-05-31 14:15")
+offset2024B <- 0.321 # 2024-05-31 14:30 to 2024-06-11 15:00
+offsetchangedateB <- as.POSIXct("2024-06-11 15:00")
 
-offset2024C <- 0.332121113 # 2024-05-31 14:30 to 2023-06-11 15:00
-offsetchangedateC <- as.POSIXct("2024-06-11 15:00")
+offset2024C <- 0.357 # 2024-06-11 15:15 to 2024-06-13 10:45
+# changed from 2024-06-11 16:00 to 2024-06-13 11:00 28/8/2025
+offsetchangedateC <- as.POSIXct("2024-06-13 10:45")
 
-offset2024D <- 0.372121113 #  2024-06-11 16:00 to 2024-06-13 11:00
-offsetchangedateD <- as.POSIXct("2024-06-13 11:00")
+offset2024D <- 0.32835319 # 2024-06-13 11:00 to 2024-06-21 16:30
+# changed from 2024-07-22 12:00 on 28/8/2025
+offsetchangedateD <- as.POSIXct("2024-06-21 16:30")
 
-offset2024E <- 0.336845103 #  2024-06-13 11:00 to 2024-07-22 12:00
+offset2024E <- 0.339531473 # 2024-06-21 16:45 to 2024-07-22 12:00
+# changed from 2024-07-22 12:00 to 2024-08-26 15:45
 offsetchangedateE <- as.POSIXct("2024-07-22 12:00")
 
-offset2024F <- 0.285065973 #  2024-07-22 12:00 to 2024-08-26 15:45
-offsetchangedateF <- as.POSIXct("2024-08-26 10:45")
+offset2024F <- 0.285065973 # 2024-07-22 12:15 to 2024-08-26 15:45
+offsetchangedateG <- as.POSIXct("2024-08-26 15:45")
 
-offset2024G <- 0.217462984 # Black HOBO starts 2024-08-27
-offsetchangedateG <- as.POSIXct("2024-09-27 08:00")
+offset2024G <- 0.217462984 # Black HOBO starts 2024-08-26 16:00 and silver HOBO starts 2024-09-27 8:00
+offsetchangedateG <- as.POSIXct("2024-09-27 8:00")
 
 offset2025 <- 0.067912854 # 2024-09-27 to 2025-06-02 silver HOBO
-offsetchangedate2025 <- as.POSIXct("2024-09-27 08:00")
+#offsetchangedate2025 <- as.POSIXct("2024-09-27 08:00")
 
 
 for (i in 1:nrow(dat)){
@@ -384,7 +388,7 @@ for (i in 1:nrow(dat)){
 plot(dat$DateTime.EST, dat$stage.corrected.m, type = "l")
 dat <- subset(dat, select = -c(diff, diff2, diff3, diff4, diff5))
 
-# Remove adtes & times when theEXO was out of the water for over an hour 
+# Remove adtes & times when the EXO was out of the water for over an hour 
 indx <- (dat$DateTime.EST) >= as.POSIXct("2024-07-22 11:30") & (dat$DateTime.EST) <= as.POSIXct("2024-07-22 16:15")  
 dat$stage.corrected.m[indx & !is.na(indx)] <- NA
 
