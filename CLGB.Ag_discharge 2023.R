@@ -14,7 +14,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Read barometrice pressure data
 # Get this data from Jody Potter at WQAL, make sure that units are the same 
-baroloc <- paste(dataloc, "WHB Barometric/annual/WHB_atm_Pressure2023.csv", sep = "")
+baroloc <- paste(dataloc, "Barometer/annual/WHB_atm_Pressure2023.csv", sep = "")
 barodat <- read.csv(baroloc)
 barodat$datetime <- as.POSIXct(barodat$datetime, tz = "EST",
                            format = "%Y-%m-%d %H:%M")
@@ -145,7 +145,7 @@ dat <- dat2
 
 # Convert depths to standardized depths
 offset2023A <- -0.035325772 # 2022 to 2023-06-28 15:45
-offset2023B <- -0.077775347 # 2023-06-01 10:45 to 2023-10-06
+offset2023B <- -0.077775347 # 2023-06-28 15:45 to 2023-10-06
 
 offsetchangedate <- as.POSIXct("2023-06-28 15:45")
 baddepthdate <- as.POSIXct("2023-10-06 09:15")
