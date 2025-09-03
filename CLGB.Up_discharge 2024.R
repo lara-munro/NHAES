@@ -14,7 +14,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Read barometrice pressure data
 # Get this data from Jody Potter at WQAL, make sure that units are the same 
-baroloc <- paste(dataloc, "WHB Barometric/annual/WHB_atm_Pressure2024.csv", sep = "")
+baroloc <- paste(dataloc, "Barometer/annual/WHB_atm_Pressure2024.csv", sep = "")
 barodat <- read.csv(baroloc)
 barodat$DateTime <- as.POSIXct(barodat$DateTime, tz = "EST",
                                format = "%Y-%m-%d %H:%M")
@@ -172,9 +172,26 @@ dat <- dat2
 
 # Corrected stage ---------------------------------------------------------
 
-offset2024 <- 0.02673087
- 
-dat$stage.correction.factor.m <- offset2024
+offset2024A <- 0.015974643
+offsetchangedateA <- as.POSIXct("2024-09-26 16:00")
+
+offset2024B <- 0.028449803
+offsetchangedateB <- as.POSIXct("2024-12-11 13:30")
+
+offset2024C <- -0.066636168
+offsetchangedateC <- as.POSIXct("2024-12-11 16:45")
+
+for (i in 1:nrow(dat)){
+  if (dat$DateTime.EST[i] < offsetchangedateA){
+    dat$stage.correction.factor.m[i] = offset2024A
+  } else if (dat$DateTime.EST[i] < offsetchangedateB){
+    dat$stage.correction.factor.m[i] = offset2024B
+  } else if (dat$DateTime.EST[i] < offsetchangedateC){
+    dat$stage.correction.factor.m[i] = NA
+  } else{
+    dat$stage.correction.factor.m[i] = offset2024C
+  }
+}
 
 dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
 
