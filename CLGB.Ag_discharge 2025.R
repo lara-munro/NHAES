@@ -11,7 +11,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Read barometrice pressure data
 # Get this data from Jody Potter at WQAL, make sure that units are the same 
-baroloc <- paste(dataloc, "WHB Barometric/annual/atm_Pressure2025.csv", sep = "")
+baroloc <- paste(dataloc, "Barometer/annual/atm_Pressure2025.csv", sep = "")
 barodat <- read.csv(baroloc)
 barodat$DateTime <- as.POSIXct(barodat$DateTime, tz = "EST",
                            format = "%Y-%m-%d %H:%M")
