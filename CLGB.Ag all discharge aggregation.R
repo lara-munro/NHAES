@@ -37,3 +37,38 @@ ggplot(dat.all, aes(x=DateTime.EST)) +
 #  ylim(c(0.0001, 0.5))+
   theme_classic()
 
+write.csv(dat.all, paste0(dataloc,"/CLGB.AG/data/stage/y2025/finalData/CLGB.AG_2022-2025_DISCHARGE_meas.csv"), row.names = F)
+
+
+# Aggregate CLGB.Up -------------------------------------------------------
+
+
+dat2024 <- read.csv(paste0(dataloc,"/CLGB.UP/stage/y2024/finalData/CLGB.UP_2024_DISCHARGE.csv"))
+dat2025 <- read.csv(paste0(dataloc,"/CLGB.UP/stage/y2025/finalData/CLGB.UP_2025_DISCHARGE.csv"))
+
+dat.all <- rbind(dat2024, dat2025)
+dat.all <- dat.all[!duplicated(dat.all),]
+
+write.csv(dat.all, paste0(dataloc,"/CLGB.UP/ratingCurve/CLGB.UP_2024-2025_DISCHARGE.csv"), row.names = F)
+
+dat.all$DateTime.EST <- as.POSIXct(dat.all$DateTime, tz = "EST",
+                                   format = "%Y-%m-%d %H:%M")
+
+qmeas <- read.csv(paste0(dataloc, "CLGB.UP/ratingCurve/CLGB.Up_discharge_measurements.csv"))
+qmeas$DateTime.EST <- as.POSIXct(paste(qmeas$date, qmeas$time), tz = "EST",
+                                 format = "%Y-%m-%d %H:%M")
+qmeas <- subset(qmeas, select =c("DateTime.EST", "measured.Q.m3s"))
+dat.all <- merge(dat.all, qmeas, by = "DateTime.EST", all.x = TRUE, all.y = FALSE)
+dat.all$Q.m3s[dat.all$Q.m3s < 1e-10] <- NA
+
+
+ggplot(dat.all, aes(x=DateTime.EST)) +
+  geom_line(aes(y = Q.m3s))+
+  geom_point(aes(y = measured.Q.m3s,  color = "measured Q"))+
+  scale_x_datetime(name = "Date") +
+  scale_y_log10(limits = c(0.0001, 1))+
+  ylab("Discharge (m3/s)")+
+  #  ylim(c(0.0001, 0.5))+
+  theme_classic()
+
+write.csv(dat.all, paste0(dataloc,"/CLGB.UP/stage/y2025/finalData/CLGB.UP_2024-2025_DISCHARGE_meas.csv"), row.names = F)
