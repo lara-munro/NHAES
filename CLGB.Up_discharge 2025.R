@@ -17,7 +17,7 @@ dataloc <- "C:/Users/laram/OneDrive - USNH/CLGB/"
 
 # Read barometrice pressure data
 # Get this data from Jody Potter at WQAL, make sure that units are the same 
-baroloc <- paste(dataloc, "WHB Barometric/annual/atm_Pressure2025.csv", sep = "")
+baroloc <- paste(dataloc, "Barometer/annual/atm_Pressure2025.csv", sep = "")
 barodat <- read.csv(baroloc)
 barodat$DateTime <- as.POSIXct(barodat$DateTime, tz = "EST",
                                format = "%Y-%m-%d %H:%M")
@@ -150,7 +150,7 @@ dat[sapply(dat, is.infinite)] <- NA
 dat <- subset(dat, select = -(density.lbft))
 
 # Remove data after change in barometric pressure
-dat <- dat[which(dat$DateTime.EST <= as.POSIXct("2025-06-02 9:00", tz = "EST")),]
+dat <- dat[which(dat$DateTime.EST <= as.POSIXct("2025-06-03 9:00", tz = "EST")),]
 
 # Export data ----------------------------------------------------------
 dat2 <- dat
@@ -161,13 +161,14 @@ dat <- dat2
 
 # Corrected stage ---------------------------------------------------------
 
-offset2025A <- 0.02673087 # Until 2025-03-24
-offsetchangedateA <- as.POSIXct("2025-03-21 13:00")
+offset2025A <- -0.066636168 # Until 2025-03-24
+offsetchangedateA <- as.POSIXct("2025-03-21 12:45")
 
-offset2025B <- 0.084815629 # From 2025-03-24 until 2025-06-02 9:00
-offsetchangedateB <- as.POSIXct("2025-06-02 09:00")
+offset2025B <- 0.070894852# From 2025-03-24 until 2025-04-24 15:15
+offsetchangedateB <- as.POSIXct("2025-04-24 15:15")
 
-offset2025C <- 0.073921778 # From 2025-06-02 9:00
+offset2025C <- 0.089455888 # From 2025-04-24 15:30 to 2025-06-03 9:00
+
 
 for (i in 1:nrow(dat)){
   if (dat$DateTime.EST[i] < offsetchangedateA){
@@ -195,9 +196,9 @@ for (i in 1:nrow(dat)){
 
 
 plot(dat$DateTime.EST, dat$Q.m3s, type = "l",
-     ylab = "Q (m3/s)", xlab = "Date 2024")
+     ylab = "Q (m3/s)", xlab = "Date 2025")
 plot(dat$DateTime.EST, dat$Q.m3s, type = "l", log = "y",
-     ylab = "Q (m3/s)", xlab = "Date 2024")
+     ylab = "Q (m3/s)", xlab = "Date 2025")
 
 dat2 <- dat
 dat$DateTime.EST <- as.character(format(dat$DateTime.EST))
