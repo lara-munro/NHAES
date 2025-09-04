@@ -197,7 +197,7 @@ dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
 
 # Discharge ---------------------------------------------------------------
 
-dat$Q.m3s <- 3.6413 * dat$stage.corrected.m**5.6353
+dat$Q.m3s <- 3.4045  * dat$stage.corrected.m** 4.9984
 
 for (i in 1:nrow(dat)){
   if (is.na(dat$stage.corrected.m[i])){
