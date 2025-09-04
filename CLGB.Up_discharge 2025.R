@@ -168,6 +168,9 @@ offset2025B <- 0.070894852# From 2025-03-24 until 2025-04-24 15:15
 offsetchangedateB <- as.POSIXct("2025-04-24 15:15")
 
 offset2025C <- 0.089455888 # From 2025-04-24 15:30 to 2025-06-03 9:00
+offsetchangedateC <- as.POSIXct("2025-06-03 09:00")
+
+offset2025D <- 0.077088756 # From 2025-06-03 09:00 for new barometer
 
 
 for (i in 1:nrow(dat)){
@@ -184,10 +187,18 @@ dat$stage.corrected.m <- dat$stage.raw.m + dat$stage.correction.factor.m
 
 # Discharge ---------------------------------------------------------------
 
-dat$Q.m3s <- 3.6413 * dat$stage.corrected.m**5.6353
+for (i in 1:nrow(dat)){
+  if (dat$DateTime.EST[i] < as.POSIXct("2025-03-24 00:00")){
+    dat$Q.m3s[i] <- 3.4045  * dat$stage.corrected.m[i]** 4.9984
+  } else {
+    dat$Q.m3s[i] <- 1.5314 * dat$stage.corrected.m[i]**  5.3277
+  }
+}
 
 for (i in 1:nrow(dat)){
-  if(dat$stage.corrected.m[i] > 0.66){
+  if (is.na(dat$stage.corrected.m[i])){
+    dat$Q.m3sQF[i] <- 1
+  } else if(dat$stage.corrected.m[i] > 0.66){
     dat$Q.m3sQF[i] <- 1
   } else {
     dat$Q.m3sQF[i] <- 0
